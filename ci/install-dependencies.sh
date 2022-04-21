@@ -37,13 +37,18 @@ macos-latest)
 	test -z "$BREW_INSTALL_PACKAGES" ||
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
-	brew install --cask --no-quarantine perforce || {
-		# Update the definitions and try again
-		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
-		git -C "$cask_repo" pull --no-stat --ff-only &&
-		brew install --cask --no-quarantine perforce
-	} ||
-	brew install homebrew/cask/perforce
+	brew install perforce || {
+		echo Installing perforce failed, assuming and working around SHA256 mismatch >&2 &&
+
+		path=$(brew edit --print-path perforce) &&
+
+		# we do not do this unconditionally because we want
+		# to know that we are falling back.  Do not copy this
+		# use of 'sed -i .bak' elsewhere---it does not work with
+		# other implementations of "sed".
+		sed -i .bak -e 's/\(sha256.\).*/\1:no_check/' "$path" &&
+		brew install perforce
+	}
 
 	if test -n "$CC_PACKAGE"
 	then
