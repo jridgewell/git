@@ -487,13 +487,13 @@ static void alias_all_urls(struct remote_state *remote_state)
 		}
 		add_pushurl_aliases = remote_state->remotes[i]->pushurl_nr == 0;
 		for (j = 0; j < remote_state->remotes[i]->url_nr; j++) {
+			remote_state->remotes[i]->url[j] =
+				alias_url(remote_state->remotes[i]->url[j],
+					  &remote_state->rewrites);
 			if (add_pushurl_aliases)
 				add_pushurl_alias(
 					remote_state, remote_state->remotes[i],
 					remote_state->remotes[i]->url[j]);
-			remote_state->remotes[i]->url[j] =
-				alias_url(remote_state->remotes[i]->url[j],
-					  &remote_state->rewrites);
 		}
 	}
 }

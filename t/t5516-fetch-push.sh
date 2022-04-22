@@ -175,6 +175,23 @@ test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
 	)
 '
 
+test_expect_success 'fetch with insteadOf and pushInsteadOf (insteadOf should rewrite)' '
+	mk_empty testrepo &&
+	(
+		TRASH=$(pwd)/ &&
+		cd testrepo &&
+		git config "url.$TRASH.insteadOf" trash/ &&
+		git config "url.trash/.pushInsteadOf" "$TRASH" &&
+		git config remote.up.url "$TRASH" &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		echo "$the_commit commit	refs/remotes/origin/main" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
+	)
+'
+
 grep_wrote () {
 	object_count=$1
 	file_name=$2
@@ -267,6 +284,20 @@ test_expect_success 'push with pushInsteadOf' '
 	TRASH="$(pwd)/" &&
 	test_config "url.$TRASH.pushInsteadOf" trash/ &&
 	git push trash/testrepo refs/heads/main:refs/remotes/origin/main &&
+	(
+		cd testrepo &&
+		echo "$the_commit commit	refs/remotes/origin/main" >expect &&
+		git for-each-ref refs/remotes/origin >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'push with pushInsteadOf and insteadOf (pushInsteadOf should rewrite)' '
+	mk_empty testrepo &&
+	test_config "url.testrepo/.pushInsteadOf" trash/ &&
+	test_config "url.trash/.insteadOf" testrepo/ &&
+	test_config remote.r.url testrepo/ &&
+	git push r refs/heads/main:refs/remotes/origin/main &&
 	(
 		cd testrepo &&
 		echo "$the_commit commit	refs/remotes/origin/main" >expect &&
